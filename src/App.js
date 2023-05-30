@@ -1,24 +1,24 @@
-import logo from './logo.svg';
-import './App.css';
+import "./App.css";
+import { DateTextBox } from "./lib";
+//DevExtreme Styles
+import '../src/lib/assets/lib/devexpress/css/dx.common.css'
+import '../src/lib/assets/lib/devexpress/css/dx.light.css';
+//Fort Awesome Icons
+import '../src/lib/assets/lib/fortawesome/embedded-woff.css';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <DateTextBox
+      name="Document Date From"
+      value=''
+      placeholder="MM/DD/YYYY"
+      isRequired={true}
+      isCalendarRequired={true}
+      isClearRequired={true}
+      isFutureRequired={false}
+     //maximumDate = "05/06/2023"
+      minimumDate="01/01/2023"
+    />
   );
 }
 
