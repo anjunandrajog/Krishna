@@ -1,40 +1,91 @@
-import {TextBox } from "devextreme-react/text-box";
-import { useState, useRef } from "react";
+import { TextBox } from "devextreme-react/text-box";
+import { useState, useRef, useEffect } from "react";
 import { Calendar } from "devextreme-react/calendar";
 import { Popup } from "devextreme-react/popup";
 import * as React from "react";
+import "../assets/css/customDateBox-styles.css";
 
 // To convert the date selected from the calendar or date comimng in the props into MM/DD/YYYY format
 const formatDate = (dateString) => {
-  const date = new Date(dateString);
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  const year = date.getFullYear();
-  const formattedDate = `${month}/${day}/${year}`;
-  //const formattedDate = date.toLocaleDateString('en-US');
-  return formattedDate;
+  if (dateString) {
+    const date = new Date(dateString);
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const year = date.getFullYear();
+    const formattedDate = `${month}/${day}/${year}`;
+    return formattedDate;
+  }
+  return;
 };
 
 function DateTextBox(props) {
+  const [name, setName] = useState(props.name ? props.name : " ");
+
   const [date, setDate] = useState(props.value ? formatDate(props.value) : "");
   const [errorMessage, setErrorMessage] = useState("");
   const [popupVisible, setPopupVisible] = useState(false);
-
-  const isCalendarRequired = props.isCalendarRequired;
-  const isClearRequired = props.isClearRequired;
-  const minDate = props.minimumDate;
-  const maxDate = props.maximumDate;
+  const [maxDate, setMaxDate] = useState(
+    props.maximumDate ? new Date(props.maximumDate) : null
+  );
+  const [minDate, setMinDate] = useState(
+    props.minimumDate ? new Date(props.minimumDate) : null
+  );
+  const [isCalendarRequired, setisCalendarRequired] = useState(
+    props.isCalendarRequired ? props.isCalendarRequired : null
+  );
+  const [allowFutureDates, setallowFutureDates] = useState(
+    props.allowFutureDates !== undefined && props.allowFutureDates === false
+      ? false
+      : true
+  );
+  const [allowAutoSelection, setAllowAutoSelection] = useState(
+    props.allowAutoSelection !== undefined && props.allowAutoSelection === true
+      ? true
+      : false
+  );
+  const [isRequired, setisRequired] = useState(
+    props.isRequired !== undefined && props.isRequired === true ? true : false
+  );
+  const [isClearRequired, setisClearRequired] = useState(
+    props.isClearRequired !== undefined && props.isClearRequired === true
+      ? true
+      : false
+  );
+  const [isReadOnly, setisReadOnly] = useState(
+    props.isReadOnly !== undefined && props.isReadOnly === true ? true : false
+  );
 
   const calendarRef = useRef(null);
   const textBoxRef = useRef(null);
   const buttonRef = useRef(null);
 
-  // const getMaxDate = () => {
-  //   if (!props.isFutureRequired) {
-  //     return new Date(); // Set max date as the current date
-  //   }
-  //   return null; // Allow all dates
-  // };
+  const errorStyle = {
+    color: "red",
+  };
+
+  const containerStyle = {
+    display: "flex",
+    alignItems: "center",
+    border: "1px solid #ccc",
+    borderRadius: "4px",
+    padding: "4px",
+  };
+
+  const getMaxDate = () => {
+    //To allow future date selection
+    if (allowFutureDates) {
+    }
+    //To restrict future dates, do not allow user to select date greater than current date
+    else {
+      return new Date(); // Set max date as the current date
+    }
+
+    //To restrict date greater than max date
+    if (maxDate) {
+      return maxDate;
+    }
+    return null; // Allow all dates
+  };
 
   const handleCalendarClick = () => {
     setErrorMessage("");
@@ -49,6 +100,7 @@ function DateTextBox(props) {
     setTimeout(() => {
       if (textBoxRef.current) {
         setDate(""); // clear the TextBox
+        setErrorMessage(""); // clear the error message
         if (props.onDateChange) {
           props.onDateChange(""); // Notify parent component of the date change for clearing this & other DateBoxComponent of the parent component
         }
@@ -74,9 +126,7 @@ function DateTextBox(props) {
   const handleDateChange = (e) => {
     let originalValue = e.component?.option("value");
     const inputDate = new Date(originalValue);
-    const _minDate = new Date(minDate);
-    const _maxDate = new Date(maxDate);
-    //const currentDate = new Date();
+    const currentDate = new Date();
 
     if (originalValue.trim() !== "") {
       // Validate the date format
@@ -86,53 +136,63 @@ function DateTextBox(props) {
       let status = regexExp.test(originalValue);
 
       if (!status) {
-        setErrorMessage("Invalid date format (MM/DD/YYYY)");
+        if (props.invalidDateError) {
+          setErrorMessage(props.invalidDateError);
+        } else {
+          setErrorMessage("Enter valid date");
+        }
         setDate(originalValue);
         return;
       }
 
-      // // Validate the date value for future date only if future date validation is required
-      // if (!props.isFutureRequired) {
-      //   if (inputDate > currentDate) {
-      //     setErrorMessage("Date cannot be in the future");
-      //     setDate(originalValue);
-      //     return;
-      //   }
-      // }
-
       // Validate the date value for minimum date only if minimum date validation is required
-
-      //if (minDate && originalValue < minDate) {
-      if (minDate && inputDate < _minDate) {
-        setErrorMessage("Date cannot be beyond minimum date set");
+      if (minDate && inputDate < minDate) {
+        if (props.minDateError) {
+          setErrorMessage(props.minDateError);
+        } else {
+          setErrorMessage("Date cannot be smaller than the minimum date set");
+        }
         setDate(originalValue);
         return;
       }
 
       // Validate the date value for maximum date only if maximum date validation is required
 
-      if (maxDate && inputDate > _maxDate) {
-        if (!props.isFutureRequired) {
-            setErrorMessage("Date cannot be in the future");
+      if (maxDate && inputDate > maxDate) {
+        if (props.maxDateError) {
+          setErrorMessage(props.maxDateError);
+        } else {
+          setErrorMessage("Date cannot be beyond maximum date set");
         }
-        setErrorMessage("Date cannot be greater than the maximum date set");
         setDate(originalValue);
         return;
       }
 
-      setDate(originalValue);
-      setErrorMessage("");
-
-      //to update 2nd textbox with the value from 1st DateTextbox on entering date manually
-      if (props.onDateChange) {
-        props.onDateChange(originalValue); // Notify parent component of the date change
+      if (!allowFutureDates && inputDate > currentDate) {
+        if (props.futureError) {
+          setErrorMessage(props.futureError);
+        } else {
+          setErrorMessage("Future date is not allowed");
+        }
+        setDate(originalValue);
+        return;
       }
     } else {
-      if (props.isRequired) {
-        setErrorMessage(props.name + " cannot be empty");
+      if (isRequired) {
+        if (props.isRequiredError) {
+          setErrorMessage(props.isRequiredError);
+        } else {
+          setErrorMessage("Field is required.");
+        }
         setDate(originalValue);
         return;
       }
+    }
+    if (props.onDateChange) {
+      props.onDateChange(originalValue); // Notify parent component of the date change
+    }
+    if (textBoxRef.current) {
+      textBoxRef.current.instance.focus();
     }
   };
 
@@ -158,131 +218,107 @@ function DateTextBox(props) {
 
       //to update 2nd textbox with the value from 1st DateTextbox on entering date manually
       if (props.onDateChange) {
-        props.onDateChange(""); // Notify parent component of the date change for clearing the text box
+        props.onDateChange(text); // Notify parent component of the date change for clearing the text box
       }
     }
   };
+
   // To fill the textbox with the date selected from the calendar in MM/DD/YYYY format
-  // const handleCalendarValueChanged = (e, textBoxRef) => {
-  //   if (e.value instanceof Date) {
-  //     const formattedDate = formatDate(e.value);
-  //     textBoxRef.current.instance.option("value", formattedDate);
-  //     setDate(formattedDate);
-  //     //setShowCalendar(!showCalendar);
-  //     setPopupVisible(false); // to hide the calendar on selection
-
-  //     if (props.onDateChange) {
-  //       props.onDateChange(formattedDate); // Notify parent component of the date change for updating it's value to other DatetextBox of the parent component
-  //     }
-
-  //     if (textBoxRef.current) {
-  //       textBoxRef.current.instance.focus();
-  //     }
-  //   }
-  // };
-
   const handleCalendarValueChanged = (e, textBoxRef) => {
     if (e.value instanceof Date) {
       const formattedDate = formatDate(e.value);
       textBoxRef.current.instance.option("value", formattedDate);
       setDate(formattedDate);
       setPopupVisible(false); // to hide the calendar on selection
-  
+
       if (props.onDateChange) {
         props.onDateChange(formattedDate); // Notify parent component of the date change for updating its value to other DateTextBox of the parent component
       }
-  
-      if (textBoxRef.current) {
-        textBoxRef.current.instance.focus();
+    }
+
+    if (textBoxRef.current) {
+      textBoxRef.current.instance.focus();
+    }
+  };
+
+  useEffect(() => {
+    if (textBoxRef.current && allowAutoSelection) {
+      const { value } = textBoxRef.current;
+      if (value) {
+        textBoxRef.current.setSelectionRange(0, value.length);
       }
     }
-    // if (calendarRef.current) {
-    //   calendarRef.current.instance.onInitialized(); // Call onInitialized function of the Calendar component
-    // }
-  };
-  
-                                          
+  }, []);
+
   return (
     <>
-      {isCalendarRequired ? (
-        <div className="input-group">
-          <div style={{ display: "flex" }}>
-            <TextBox
-              value={date ? date : props.value}
-              ref={textBoxRef}
-              placeholder={props.placeholder}
-              onFocusOut={handleDateChange}
-              maxLength={10}
-              width="180px"
-              mode="text"
-              valueChangeEvent="keyup blur"
-              onValueChanged={handleValueChange}
-              onKeyPress={handleKeyPress}
-              style={{ flex: "1 1 auto" }} //grow and shrink text box as needed.so that that the clear button and calendar button stay on the same line.
-            />
-            {date && isClearRequired ? (
-              <button
-                tabIndex={-1} // to make button unfocusable using the Tab key
-                onClick={handleClearClick}
-                className="clear-button"
-              >
-                <i className="fa fa-close" />
-              </button>
-            ) : null}
-
+      <div>
+        <div className="custom-datebox">
+          <TextBox
+            value={date ? date : formatDate(props.value)}
+            ref={textBoxRef}
+            placeholder={props.placeholder}
+            onFocusOut={handleDateChange}
+            maxLength={10}
+            mode="text"
+            valueChangeEvent="keyup blur"
+            onValueChanged={handleValueChange}
+            onKeyPress={handleKeyPress}
+            style={{ flex: 1, border: "none" }} //grow and shrink text box as needed.so that that the clear button and calendar button stay on the same line.
+            readOnly={isReadOnly}
+            disabled={isReadOnly ? true : ""}
+          />
+          {date && isClearRequired ? (
+            <button
+              tabIndex={-1} // to make button unfocusable using the Tab key
+              onClick={handleClearClick}
+              disabled={isReadOnly ? true : ""}
+              className="clear-button"
+            >
+              <i className="fa fa-close" />
+            </button>
+          ) : null}
+          {isCalendarRequired ? (
             <button
               ref={buttonRef}
               tabIndex={-1}
+              disabled={isReadOnly ? true : ""}
               onClick={handleCalendarClick}
               className="btn btn-outline-secondary calendar-button"
             >
               <span className="fa fa-calendar-alt"></span>
             </button>
-          </div>
-
-          <Popup
-            visible={popupVisible}
-            onHiding={handlePopupHidden}
-            target="buttonRef"
-            closeOnOutsideClick={true}
-            showTitle={false}
-            width="auto"
-            height="auto"
-            position={{
-              my: "bottom",
-              at: "top",
-              of: buttonRef.current,
-              collision: "flip", 
-            }}
-          >
-            <Calendar
-              ref={calendarRef}
-              onInitialized={() => {}}
-              onValueChanged={(e) => handleCalendarValueChanged(e, textBoxRef)}
-              firstDayOfWeek={1}
-              // max={!props.isFutureRequired ? new Date(): maxDate ? maxDate : ''}
-              max={maxDate ? maxDate : ""}  
-              min={minDate ? minDate : ""}            
-            />
-          </Popup>
+          ) : null}
         </div>
-      ) : (
-        <TextBox
-          value={date ? date : props.value}
-          ref={textBoxRef}
-          onFocusOut={handleDateChange}
-          placeholder={props.placeHolder}
-          maxLength={10}
-          mode="text"
-          valueChangeEvent="keyup blur"
-          onValueChanged={handleValueChange}
-          onKeyPress={handleKeyPress}
-          isRequired={props.isRequired}
-        />
-      )}
 
+        <Popup
+          visible={popupVisible}
+          onHiding={handlePopupHidden}
+          target="buttonRef"
+          closeOnOutsideClick={true}
+          showTitle={false}
+          width="auto"
+          height="auto"
+          position={{
+            my: "bottom",
+            at: "top",
+            of: buttonRef.current,
+            collision: "flip",
+          }}
+        >
+          <Calendar
+            ref={calendarRef}
+            onInitialized={() => {}}
+            onValueChanged={(e) => handleCalendarValueChanged(e, textBoxRef)}
+            firstDayOfWeek={1}
+            max={getMaxDate()}
+            //max={maxDate ? maxDate : ""}
+            min={minDate ? minDate : ""}
+          />
+        </Popup>
+      </div>
       <div>
-        <p>{errorMessage}</p>
+        <p style={errorStyle}>{errorMessage}</p>
       </div>
     </>
   );

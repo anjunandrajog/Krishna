@@ -1,0 +1,32 @@
+.custom-datebox {
+    display: flex;
+    align-items: center;
+    border: "1px solid #ccc";
+    border-radius: "4px";
+    padding: "4px";
+  }
+ 
+  .dx-textbox {
+    flex: 1;
+    margin-right: 8px;
+  } 
+                         
+  .clear-button,
+  .calendar-button {
+    margin-left: 8px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  
+   .clear-button {
+    background-color: #f44336;
+    color: white;
+  }
+   
+  .calendar-button {
+    background-color: #2196f3;
+    color: white;
+  }

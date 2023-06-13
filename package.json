@@ -16,7 +16,7 @@
   ],    
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/anjunandrajog/Krishna.git"
+    "url": "git+https://github.com/anjunandrajog/Krishna.git#master"
   },                      
   "dependencies": {
     "@testing-library/jest-dom": "^5.16.5",
